@@ -1,5 +1,6 @@
 from extensions import db
 from flask_restful import fields
+from datetime import datetime
 
 
 class UserModel(db.Model):
@@ -9,12 +10,23 @@ class UserModel(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     phone = db.Column(db.String(20), unique=True, nullable=False)
     badge_code = db.Column(db.String(50), unique=True, nullable=True)
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     fields = {
         "name": fields.String,
         "email": fields.String,
         "phone": fields.String,
         "badge_code": fields.String,
+        "updated_at": fields.DateTime(dt_format="iso8601"),
+        "scans": fields.List(
+            fields.Nested(
+                {
+                    "activity_name": fields.String,
+                    "scanned_at": fields.DateTime(dt_format="iso8601"),
+                    "activity_category": fields.String,
+                }
+            )
+        ),
     }
 
     def __repr__(self):

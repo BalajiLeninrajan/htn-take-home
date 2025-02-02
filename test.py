@@ -1,3 +1,4 @@
+from time import sleep
 import pytest
 import json
 from app import app, db, UserModel
@@ -28,6 +29,7 @@ class TestUsersResource:
         data = json.loads(response.data)
         assert len(data) == 1
         assert data[0]["name"] == "Test User"
+        assert data[0]["scans"] == []
 
 
 class TestUserResource:
@@ -43,6 +45,12 @@ class TestUserResource:
         assert response.status_code == 404
 
     def test_update_user(self, client):
+        initial_response = client.get("/users/1")
+        initial_data = json.loads(initial_response.data)
+        initial_updated_at = initial_data["updated_at"]
+
+        sleep(1)
+
         update_data = {"name": "Updated Name", "email": "updated@example.com"}
         response = client.put(
             "/users/1", data=json.dumps(update_data), content_type="application/json"
@@ -51,6 +59,7 @@ class TestUserResource:
         data = json.loads(response.data)
         assert data["name"] == "Updated Name"
         assert data["email"] == "updated@example.com"
+        assert data["updated_at"] != initial_updated_at
 
     def test_update_invalid_user(self, client):
         response = client.put("/users/999")
