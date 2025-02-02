@@ -27,13 +27,8 @@ class Users(Resource):
 
 
 class User(Resource):
-    @marshal_with(UserModel.fields)
-    def get(self, user_id):
-        user = UserModel.query.filter_by(id=user_id).first()
-        if not user:
-            return {"message": "User not found"}, 404
-
-        scans = ScanModel.query.filter_by(user_id=user_id).all()
+    def get_scans(self, user):
+        scans = ScanModel.query.filter_by(user_id=user.id).all()
         user.scans = []
         for scan in scans:
             activity = ActivityModel.query.get(scan.activity_id)
@@ -44,6 +39,14 @@ class User(Resource):
                     "scanned_at": scan.timestamp,
                 }
             )
+
+    @marshal_with(UserModel.fields)
+    def get(self, user_id):
+        user = UserModel.query.filter_by(id=user_id).first()
+        if not user:
+            return {"message": "User not found"}, 404
+
+        self.get_scans(user)
         return user
 
     @marshal_with(UserModel.fields)
@@ -65,6 +68,7 @@ class User(Resource):
 
         user.updated_at = datetime.now()
         db.session.commit()
+        self.get_scans(user)
         return user
 
 
