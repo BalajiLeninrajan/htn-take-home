@@ -82,7 +82,7 @@ class User(Resource):
         Returns:
             dict: Updated user data if found, 404 error otherwise.
 
-        Request body should contain one or more of:
+        Request body can contain any combination of the following:
             - name (str): User's name
             - email (str): User's email
             - phone (str): User's phone number
