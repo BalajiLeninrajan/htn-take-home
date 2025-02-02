@@ -1,6 +1,6 @@
 # Badge Scanner API
 
-## Overview
+## Intro
 
 Take home assignment for Hack The North 2025 Org Team (Back-end).
 https://gist.github.com/SuperZooper3/13ef0b54008e0336f25ee75008fa6812
@@ -58,7 +58,7 @@ This API is used to scan badges and record the activity.
   - No CI/CD setup.
   - Having all the endpoints in the same file.
   - Subpar input validation.
-- It looks like I spend a lot of time on the project but I was on and off of trains for most of it, hence the sporadic commits :).
+- It looks like I spent a lot of time on the project but I was on and off of trains for most of it, hence the sporadic commits :).
 
 ## API
 
