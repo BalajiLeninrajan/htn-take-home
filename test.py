@@ -49,8 +49,6 @@ class TestUserResource:
         initial_data = json.loads(initial_response.data)
         initial_updated_at = initial_data["updated_at"]
 
-        sleep(1)
-
         update_data = {"name": "Updated Name", "email": "updated@example.com"}
         response = client.put(
             "/users/1", data=json.dumps(update_data), content_type="application/json"
