@@ -7,8 +7,15 @@ from datetime import datetime
 
 
 class Users(Resource):
+    """Resource for handling operations on multiple users."""
+
     @marshal_with(UserModel.fields)
     def get(self):
+        """Retrieve all users with their scan history.
+
+        Returns:
+            list: List of all users with their associated scans.
+        """
         users = UserModel.query.all()
         for user in users:
             scans = ScanModel.query.filter_by(user_id=user.id).all()
@@ -28,7 +35,14 @@ class Users(Resource):
 
 
 class User(Resource):
+    """Resource for handling operations on a single user."""
+
     def get_scans(self, user):
+        """Helper method to fetch and format scan history for a user.
+
+        Args:
+            user (UserModel): User object to fetch scans for.
+        """
         scans = ScanModel.query.filter_by(user_id=user.id).all()
         user.scans = []
         for scan in scans:
@@ -43,6 +57,14 @@ class User(Resource):
 
     @marshal_with(UserModel.fields)
     def get(self, user_id):
+        """Retrieve a specific user by ID with their scan history.
+
+        Args:
+            user_id (int): The ID of the user to retrieve.
+
+        Returns:
+            dict: User data with scan history if found, 404 error otherwise.
+        """
         user = UserModel.query.filter_by(id=user_id).first()
         if not user:
             return {"message": "User not found"}, 404
@@ -52,6 +74,20 @@ class User(Resource):
 
     @marshal_with(UserModel.fields)
     def put(self, user_id):
+        """Update a specific user's information.
+
+        Args:
+            user_id (int): The ID of the user to update.
+
+        Returns:
+            dict: Updated user data if found, 404 error otherwise.
+
+        Request body should contain one or more of:
+            - name (str): User's name
+            - email (str): User's email
+            - phone (str): User's phone number
+            - badge_code (str): User's badge code
+        """
         user = UserModel.query.filter_by(id=user_id).first()
         if not user:
             return {"message": "User not found"}, 404
@@ -74,8 +110,22 @@ class User(Resource):
 
 
 class Scan(Resource):
+    """Resource for handling individual scan operations."""
+
     @marshal_with(ScanModel.fields)
     def put(self, user_id):
+        """Create a new scan entry for a user.
+
+        Args:
+            user_id (int): The ID of the user creating the scan.
+
+        Returns:
+            dict: Created scan data if successful, error message otherwise.
+
+        Request body must contain:
+            - activity_name (str): Name of the activity
+            - activity_category (str): Category of the activity
+        """
         user = UserModel.query.filter_by(id=user_id).first()
         if not user:
             return {"message": "User not found"}, 404
@@ -110,8 +160,20 @@ class Scan(Resource):
 
 
 class Scans(Resource):
+    """Resource for querying scan statistics."""
+
     @marshal_with(ActivityModel.fields)
     def get(self):
+        """Retrieve scan statistics with optional filtering.
+
+        Query Parameters:
+            min_frequency (int, optional): Minimum number of scans
+            max_frequency (int, optional): Maximum number of scans
+            activity_category (str, optional): Filter by activity category
+
+        Returns:
+            list: List of activities with their scan counts matching the criteria.
+        """
         min_frequency = request.args.get("min_frequency", type=int)
         max_frequency = request.args.get("max_frequency", type=int)
         activity_category = request.args.get("activity_category")
