@@ -39,7 +39,10 @@ class ActivityModel(db.Model):
     name = db.Column(db.String(80), nullable=False)
     category = db.Column(db.String(80), nullable=False)
 
-    fields = {"name": fields.String, "category": fields.String}
+    fields = {
+        "name": fields.String,
+        "category": fields.String,
+    }
 
     def __repr__(self):
         return f"Activity({self.name}, {self.category})"
