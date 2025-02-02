@@ -1,5 +1,6 @@
 from flask_restful import Resource, marshal_with
 from flask import request
+from sqlalchemy import func
 from models import UserModel, ActivityModel, ScanModel
 from extensions import api, app, db
 from datetime import datetime
@@ -20,7 +21,7 @@ class Users(Resource):
                         "activity_category": (
                             activity.category if activity else "Unknown"
                         ),
-                        "scanned_at": scan.timestamp,
+                        "scanned_at": scan.scanned_at,
                     }
                 )
         return users
@@ -108,9 +109,44 @@ class Scan(Resource):
         return scan
 
 
+class Scans(Resource):
+    @marshal_with(ActivityModel.fields)
+    def get(self):
+        min_frequency = request.args.get("min_frequency", type=int)
+        max_frequency = request.args.get("max_frequency", type=int)
+        activity_category = request.args.get("activity_category")
+
+        query = (
+            db.session.query(
+                ActivityModel.name,
+                ActivityModel.category,
+                func.count(ScanModel.id).label("frequency"),
+            )
+            .join(ScanModel, ActivityModel.id == ScanModel.activity_id)
+            .group_by(ActivityModel.id)
+        )
+
+        if min_frequency:
+            query = query.having(func.count(ScanModel.id) >= min_frequency)
+        if max_frequency:
+            query = query.having(func.count(ScanModel.id) <= max_frequency)
+        if activity_category:
+            query = query.filter(ActivityModel.category == activity_category)
+
+        return [
+            {
+                "activity_name": name,
+                "activity_category": category,
+                "scan_count": count,
+            }
+            for name, category, count in query.all()
+        ]
+
+
 api.add_resource(Users, "/users")
 api.add_resource(User, "/users/<int:user_id>")
 api.add_resource(Scan, "/scan/<int:user_id>")
+api.add_resource(Scans, "/scans")
 
 if __name__ == "__main__":
     app.run(debug=True)

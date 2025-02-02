@@ -140,3 +140,112 @@ class TestScanResource:
             content_type="application/json",
         )
         assert response.status_code == 400
+
+
+class TestScansResource:
+    def test_scans_without_filters(self, client):
+        with app.app_context():
+            activity1 = ActivityModel(name="workshop1", category="workshop")  # type: ignore
+            activity2 = ActivityModel(name="ceremony1", category="ceremony")  # type: ignore
+            db.session.add_all([activity1, activity2])
+            db.session.commit()
+
+            scans1 = [ScanModel(user_id=1, activity_id=activity1.id) for _ in range(3)]  # type: ignore
+            scans2 = [ScanModel(user_id=1, activity_id=activity2.id) for _ in range(2)]  # type: ignore
+            db.session.add_all(scans1 + scans2)
+            db.session.commit()
+
+        response = client.get("/scans")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+
+        assert len(data) == 2
+        activities = {item["activity_name"]: item["scan_count"] for item in data}
+        assert activities["workshop1"] == 3
+        assert activities["ceremony1"] == 2
+
+    def test_scans_with_min_frequency(self, client):
+        with app.app_context():
+            activity1 = ActivityModel(name="workshop1", category="workshop")  # type: ignore
+            activity2 = ActivityModel(name="ceremony1", category="ceremony")  # type: ignore
+            db.session.add_all([activity1, activity2])
+            db.session.commit()
+
+            scans1 = [ScanModel(user_id=1, activity_id=activity1.id) for _ in range(3)]  # type: ignore
+            scans2 = [ScanModel(user_id=1, activity_id=activity2.id) for _ in range(2)]  # type: ignore
+            db.session.add_all(scans1 + scans2)
+            db.session.commit()
+
+        response = client.get("/scans?min_frequency=3")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+
+        assert len(data) == 1
+        assert data[0]["activity_name"] == "workshop1"
+        assert data[0]["scan_count"] == 3
+
+    def test_scans_with_max_frequency(self, client):
+        with app.app_context():
+            activity1 = ActivityModel(name="workshop1", category="workshop")  # type: ignore
+            activity2 = ActivityModel(name="ceremony1", category="ceremony")  # type: ignore
+            db.session.add_all([activity1, activity2])
+            db.session.commit()
+
+            scans1 = [ScanModel(user_id=1, activity_id=activity1.id) for _ in range(3)]  # type: ignore
+            scans2 = [ScanModel(user_id=1, activity_id=activity2.id) for _ in range(2)]  # type: ignore
+            db.session.add_all(scans1 + scans2)
+            db.session.commit()
+
+        response = client.get("/scans?max_frequency=2")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+
+        assert len(data) == 1
+        assert data[0]["activity_name"] == "ceremony1"
+        assert data[0]["scan_count"] == 2
+
+    def test_scans_with_category_filter(self, client):
+        with app.app_context():
+            activity1 = ActivityModel(name="workshop1", category="workshop")  # type: ignore
+            activity2 = ActivityModel(name="ceremony1", category="ceremony")  # type: ignore
+            db.session.add_all([activity1, activity2])
+            db.session.commit()
+
+            scans1 = [ScanModel(user_id=1, activity_id=activity1.id) for _ in range(3)]  # type: ignore
+            scans2 = [ScanModel(user_id=1, activity_id=activity2.id) for _ in range(2)]  # type: ignore
+            db.session.add_all(scans1 + scans2)
+            db.session.commit()
+
+        response = client.get("/scans?activity_category=workshop")
+        assert response.status_code == 200
+        data = json.loads(response.data)
+
+        assert len(data) == 1
+        assert data[0]["activity_name"] == "workshop1"
+        assert data[0]["activity_category"] == "workshop"
+        assert data[0]["scan_count"] == 3
+
+    def test_scans_combined_filters(self, client):
+        with app.app_context():
+            activity1 = ActivityModel(name="workshop1", category="workshop")  # type: ignore
+            activity2 = ActivityModel(name="workshop2", category="workshop")  # type: ignore
+            activity3 = ActivityModel(name="ceremony1", category="ceremony")  # type: ignore
+            db.session.add_all([activity1, activity2, activity3])
+            db.session.commit()
+
+            scans1 = [ScanModel(user_id=1, activity_id=activity1.id) for _ in range(4)]  # type: ignore
+            scans2 = [ScanModel(user_id=1, activity_id=activity2.id) for _ in range(2)]  # type: ignore
+            scans3 = [ScanModel(user_id=1, activity_id=activity3.id) for _ in range(3)]  # type: ignore
+            db.session.add_all(scans1 + scans2 + scans3)
+            db.session.commit()
+
+        response = client.get(
+            "/scans?min_frequency=2&max_frequency=3&activity_category=workshop"
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+
+        assert len(data) == 1
+        assert data[0]["activity_name"] == "workshop2"
+        assert data[0]["activity_category"] == "workshop"
+        assert data[0]["scan_count"] == 2

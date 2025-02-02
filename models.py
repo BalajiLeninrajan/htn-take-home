@@ -22,8 +22,8 @@ class UserModel(db.Model):
             fields.Nested(
                 {
                     "activity_name": fields.String,
-                    "scanned_at": fields.DateTime(dt_format="iso8601"),
                     "activity_category": fields.String,
+                    "scanned_at": fields.DateTime(dt_format="iso8601"),
                 }
             )
         ),
@@ -40,8 +40,9 @@ class ActivityModel(db.Model):
     category = db.Column(db.String(80), nullable=False)
 
     fields = {
-        "name": fields.String,
-        "category": fields.String,
+        "activity_name": fields.String,
+        "activity_category": fields.String,
+        "scan_count": fields.Integer,
     }
 
     def __repr__(self):
@@ -58,8 +59,8 @@ class ScanModel(db.Model):
     fields = {
         "user_id": fields.Integer,
         "activity_name": fields.String,
-        "scanned_at": fields.DateTime(dt_format="iso8601"),
         "activity_category": fields.String,
+        "scanned_at": fields.DateTime(dt_format="iso8601"),
     }
 
     def __repr__(self):
