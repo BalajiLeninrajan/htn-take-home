@@ -1,4 +1,3 @@
-from time import sleep
 import pytest
 import json
 from app import app, db, UserModel, ActivityModel, ScanModel
