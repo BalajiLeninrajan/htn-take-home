@@ -50,13 +50,14 @@ class ScanModel(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey("user.id"), nullable=False)
     activity_id = db.Column(db.Integer, db.ForeignKey("activity.id"), nullable=False)
-    timestamp = db.Column(db.DateTime, nullable=False)
+    scanned_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
     fields = {
         "user_id": fields.Integer,
-        "activity_id": fields.Integer,
-        "timestamp": fields.DateTime,
+        "activity_name": fields.String,
+        "scanned_at": fields.DateTime(dt_format="iso8601"),
+        "activity_category": fields.String,
     }
 
     def __repr__(self):
-        return f"Scan({self.user_id}, {self.activity_id}, {self.timestamp})"
+        return f"Scan({self.user_id}, {self.activity_id}, {self.scanned_at})"

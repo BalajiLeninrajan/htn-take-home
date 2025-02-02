@@ -1,7 +1,7 @@
 from time import sleep
 import pytest
 import json
-from app import app, db, UserModel
+from app import app, db, UserModel, ActivityModel, ScanModel
 
 
 @pytest.fixture
@@ -72,3 +72,71 @@ class TestUserResource:
         data = json.loads(response.data)
         assert data["name"] == "Partial Update"
         assert data["email"] == "test@example.com"
+
+
+class TestScanResource:
+    def test_valid_scan_new_activity(self, client):
+        # Test scanning with new activity
+        response = client.put(
+            "/scan/1",
+            data=json.dumps(
+                {"activity_name": "giving_go_a_go", "activity_category": "workshop"}
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["activity_name"] == "giving_go_a_go"
+        assert data["activity_category"] == "workshop"
+        assert "scanned_at" in data
+
+        with app.app_context():
+            assert ActivityModel.query.count() == 1
+            assert ScanModel.query.count() == 1
+
+    def test_valid_scan_existing_activity(self, client):
+        with app.app_context():
+            activity = ActivityModel(name="opening_ceremony", category="activity")  # type: ignore
+            db.session.add(activity)
+            db.session.commit()
+
+        response = client.put(
+            "/scan/1",
+            data=json.dumps(
+                {"activity_name": "opening_ceremony", "activity_category": "activity"}
+            ),
+            content_type="application/json",
+        )
+        assert response.status_code == 200
+        data = json.loads(response.data)
+        assert data["activity_name"] == "opening_ceremony"
+        assert data["activity_category"] == "activity"
+
+        with app.app_context():
+            assert ActivityModel.query.count() == 1
+            assert ScanModel.query.count() == 1
+
+    def test_scan_invalid_user(self, client):
+        response = client.put(
+            "/scan/999",
+            data=json.dumps({"activity_name": "Test", "activity_category": "Test"}),
+            content_type="application/json",
+        )
+        assert response.status_code == 404
+
+    def test_scan_missing_fields(self, client):
+        # Missing activity_category
+        response = client.put(
+            "/scan/1",
+            data=json.dumps({"activity_name": "Test"}),
+            content_type="application/json",
+        )
+        assert response.status_code == 400
+
+        # Missing activity_name
+        response = client.put(
+            "/scan/1",
+            data=json.dumps({"activity_category": "Test"}),
+            content_type="application/json",
+        )
+        assert response.status_code == 400

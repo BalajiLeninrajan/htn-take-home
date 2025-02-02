@@ -36,7 +36,7 @@ class User(Resource):
                 {
                     "activity_name": activity.name if activity else "Unknown",
                     "activity_category": activity.category if activity else "Unknown",
-                    "scanned_at": scan.timestamp,
+                    "scanned_at": scan.scanned_at,
                 }
             )
 
@@ -72,8 +72,45 @@ class User(Resource):
         return user
 
 
+class Scan(Resource):
+    @marshal_with(ScanModel.fields)
+    def put(self, user_id):
+        user = UserModel.query.filter_by(id=user_id).first()
+        if not user:
+            return {"message": "User not found"}, 404
+
+        user.updated_at = datetime.now()
+        db.session.commit()
+
+        data = request.get_json()
+        try:
+            activity_name, activity_category = (
+                data["activity_name"],
+                data["activity_category"],
+            )
+        except KeyError:
+            return {"message": "Missing activity_name or activity_category"}, 400
+
+        activity = ActivityModel.query.filter_by(
+            name=activity_name, category=activity_category
+        ).first()
+        if not activity:
+            activity = ActivityModel(name=activity_name, category=activity_category)  # type: ignore
+            db.session.add(activity)
+            db.session.commit()
+
+        scan = ScanModel(user_id=user_id, activity_id=activity.id)  # type: ignore
+        db.session.add(scan)
+        db.session.commit()
+
+        scan.activity_name = activity.name  # type: ignore
+        scan.activity_category = activity.category  # type: ignore
+        return scan
+
+
 api.add_resource(Users, "/users")
 api.add_resource(User, "/users/<int:user_id>")
+api.add_resource(Scan, "/scan/<int:user_id>")
 
 if __name__ == "__main__":
     app.run(debug=True)
