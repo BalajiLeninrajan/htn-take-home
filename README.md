@@ -85,7 +85,7 @@ This API is used to scan badges and record the activity.
 
 ### Scans
 
-- `GET /scans` | Get all scans with their user and activity history.
+- `GET /scans` | Get all scans with their scan count.
   - Query Params:
     - `min_frequency` | The minimum frequency of the scans.
     - `max_frequency` | The maximum frequency of the scans.
